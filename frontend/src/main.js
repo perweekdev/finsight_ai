@@ -1,5 +1,33 @@
-// TODO: Day 3에 컴포넌트 연결
-console.log('FinSight AI frontend initialized')
+import { renderUploadPanel } from './components/UploadPanel.js'
+import { renderAnalysisCard } from './components/AnalysisCard.js'
+import { renderMetricsTable } from './components/MetricsTable.js'
+import { renderQAPanel } from './components/QAPanel.js'
+import { renderPerformanceWidget } from './components/PerformanceWidget.js'
 
-const app = document.getElementById('app')
-app.innerHTML = '<h1 style="padding:40px;color:#7eb8f7;">FinSight AI — 개발 중</h1>'
+// Mount upload panel
+const uploadPanelEl = document.getElementById('upload-panel')
+renderUploadPanel(uploadPanelEl, onDocumentReady)
+
+function onDocumentReady({ document_id, analysis }) {
+  // Show main content
+  document.getElementById('main-content').classList.remove('hidden')
+
+  // Render analysis
+  renderAnalysisCard(document.getElementById('analysis-panel'), analysis)
+
+  // Render financials
+  renderMetricsTable(document.getElementById('metrics-panel'), analysis?.financials)
+
+  // Render performance widget first (returns controller)
+  const perfWidget = renderPerformanceWidget(document.getElementById('perf-panel'))
+
+  // Render Q&A panel with callback to update perf widget
+  renderQAPanel(
+    document.getElementById('qa-panel'),
+    document_id,
+    (result) => perfWidget.addResult(result.mode, result.latency_ms)
+  )
+
+  // Smooth scroll to main content
+  document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' })
+}
