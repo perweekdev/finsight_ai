@@ -39,10 +39,15 @@ def _get_model_name() -> str:
     return settings.gemini_model
 
 
+def _max_chars() -> int:
+    """LLM 종류에 따른 최대 문서 길이 반환"""
+    return settings.max_groq_chars if settings.groq_api_key else settings.max_norag_chars
+
+
 async def run_norag_query(question: str, document_id: str) -> dict:
     start = time.time()
     doc = await supabase_repo.get_document(document_id)
-    truncated = doc["full_text"][: settings.max_norag_chars]
+    truncated = doc["full_text"][: _max_chars()]
 
     prompt_template = _load_prompt("qa_norag")
     prompt = ChatPromptTemplate.from_template(prompt_template)
@@ -63,7 +68,7 @@ async def run_norag_query(question: str, document_id: str) -> dict:
 async def run_analysis(document_id: str) -> dict:
     start = time.time()
     doc = await supabase_repo.get_document(document_id)
-    truncated = doc["full_text"][: settings.max_norag_chars]
+    truncated = doc["full_text"][: _max_chars()]
 
     prompt_template = _load_prompt("analyze")
     prompt = ChatPromptTemplate.from_template(prompt_template)

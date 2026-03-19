@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     chunk_size: int = 512
     chunk_overlap: int = 50
     top_k_chunks: int = 5
-    max_norag_chars: int = 120000
+    max_norag_chars: int = 120000   # Gemini용 (대용량)
+    max_groq_chars: int = 12000     # Groq 무료 티어 TPM 한도 대응 (~3000 토큰)
 
     class Config:
         env_file = ".env"
