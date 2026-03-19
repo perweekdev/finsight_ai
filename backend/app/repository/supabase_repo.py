@@ -18,7 +18,7 @@ def _get_client() -> Client:
 
 async def save_document(filename: str, full_text: str, page_count: int) -> str:
     """문서 메타데이터 + 전문 저장, document_id 반환"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _insert() -> str:
@@ -40,7 +40,7 @@ async def save_document(filename: str, full_text: str, page_count: int) -> str:
 
 async def save_chunks(chunks: list[dict]) -> None:
     """청크 + 임베딩 배치 저장 (50개씩)"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _bulk_insert() -> None:
@@ -56,7 +56,7 @@ async def similarity_search(
     k: int = 5,
 ) -> list[dict]:
     """코사인 유사도 기반 청크 검색 (match_chunks RPC)"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _search() -> list[dict]:
@@ -75,7 +75,7 @@ async def similarity_search(
 
 async def get_document(document_id: str) -> dict:
     """document_id로 문서 조회"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _get() -> dict:
@@ -93,7 +93,7 @@ async def get_document(document_id: str) -> dict:
 
 async def update_company_name(document_id: str, company_name: str) -> None:
     """분석 후 기업명 업데이트"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _update() -> None:
@@ -113,7 +113,7 @@ async def log_query(
     model_used: str,
 ) -> None:
     """RAG/비RAG 쿼리 성능 로그 저장"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     client = _get_client()
 
     def _log() -> None:

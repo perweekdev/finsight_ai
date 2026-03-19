@@ -13,7 +13,7 @@ _embedder = GoogleGenerativeAIEmbeddings(
 
 async def embed_query(text: str) -> list[float]:
     """단일 텍스트 임베딩 (질문용)"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _embedder.embed_query, text)
 
 
@@ -28,7 +28,7 @@ async def embed_chunks(chunks: list[dict]) -> list[dict]:
     Returns:
         embedding 필드가 추가된 청크 리스트
     """
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     texts = [c["content"] for c in chunks]
     embeddings: list[list[float]] = []
 
