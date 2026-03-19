@@ -1,5 +1,4 @@
-# 비RAG 파이프라인: 문서 전문 → Gemini 답변 / 구조화 분석
-# TODO: Day 2에 구현
+# 비RAG 파이프라인: 문서 전문 → LLM 답변 / 구조화 분석
 import json
 import re
 import time
@@ -7,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
 
 from app.core.config import settings
@@ -19,11 +19,24 @@ def _load_prompt(name: str) -> str:
 
 
 def _get_llm() -> Any:
+    """Groq 우선, 실패 시 Gemini 폴백"""
+    if settings.groq_api_key:
+        return ChatGroq(
+            model="llama-3.1-8b-instant",
+            api_key=settings.groq_api_key,
+            temperature=0.1,
+        )
     return ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.google_api_key,
         temperature=0.1,
     )
+
+
+def _get_model_name() -> str:
+    if settings.groq_api_key:
+        return "llama-3.1-8b-instant"
+    return settings.gemini_model
 
 
 async def run_norag_query(question: str, document_id: str) -> dict:
@@ -43,7 +56,7 @@ async def run_norag_query(question: str, document_id: str) -> dict:
         "sources": [],
         "mode": "norag",
         "latency_ms": latency_ms,
-        "model": settings.gemini_model,
+        "model": _get_model_name(),
     }
 
 
@@ -58,11 +71,15 @@ async def run_analysis(document_id: str) -> dict:
     chain = prompt | llm
     response = await chain.ainvoke({"document": truncated})
 
-    json_match = re.search(r"\{.*\}", response.content, re.DOTALL)
+    # JSON 추출 (```json ... ``` 또는 순수 { ... })
+    text = response.content
+    json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if not json_match:
+        json_match = re.search(r"\{.*\}", text, re.DOTALL)
     try:
-        analysis = json.loads(json_match.group()) if json_match else {}
-    except json.JSONDecodeError:
-        analysis = {"overview": response.content}
+        analysis = json.loads(json_match.group(1) if json_match and json_match.lastindex else json_match.group()) if json_match else {}
+    except (json.JSONDecodeError, AttributeError):
+        analysis = {"overview": text}
 
     latency_ms = int((time.time() - start) * 1000)
     return {"analysis": analysis, "latency_ms": latency_ms}

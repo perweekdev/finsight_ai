@@ -1,5 +1,4 @@
-# RAG 파이프라인: 질문 임베딩 → pgvector 검색 → Gemini 답변 + 출처
-# TODO: Day 2에 구현
+# RAG 파이프라인: 질문 임베딩 → pgvector 검색 → LLM 답변 + 출처
 import time
 from pathlib import Path
 from typing import Any
@@ -18,14 +17,25 @@ def _load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _get_llm(fallback: bool = False) -> Any:
-    if fallback and settings.groq_api_key:
-        return ChatGroq(model="llama3-8b-8192", api_key=settings.groq_api_key)
+def _get_llm() -> Any:
+    """Groq 우선, 실패 시 Gemini 폴백"""
+    if settings.groq_api_key:
+        return ChatGroq(
+            model="llama-3.1-8b-instant",
+            api_key=settings.groq_api_key,
+            temperature=0.1,
+        )
     return ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.google_api_key,
         temperature=0.1,
     )
+
+
+def _get_model_name() -> str:
+    if settings.groq_api_key:
+        return "llama-3.1-8b-instant"
+    return settings.gemini_model
 
 
 async def run_rag_query(question: str, document_id: str) -> dict:
@@ -40,7 +50,7 @@ async def run_rag_query(question: str, document_id: str) -> dict:
         f"[청크 {i + 1}] {chunk['content']}"
         for i, chunk in enumerate(chunks)
     ]
-    context = "\n\n".join(context_parts)
+    context = "\n\n".join(context_parts) if context_parts else "관련 청크를 찾지 못했습니다."
 
     prompt_template = _load_prompt("qa_rag")
     prompt = ChatPromptTemplate.from_template(prompt_template)
@@ -61,5 +71,5 @@ async def run_rag_query(question: str, document_id: str) -> dict:
         ],
         "mode": "rag",
         "latency_ms": latency_ms,
-        "model": settings.gemini_model,
+        "model": _get_model_name(),
     }

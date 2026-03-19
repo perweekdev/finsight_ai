@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     supabase_service_key: str
     google_api_key: str
     groq_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash-exp"
+    gemini_model: str = "gemini-2.0-flash"
     embedding_model: str = "models/gemini-embedding-001"
     chunk_size: int = 512
     chunk_overlap: int = 50

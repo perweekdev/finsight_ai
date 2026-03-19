@@ -65,7 +65,7 @@ async def similarity_search(
             {
                 "query_embedding": query_embedding,
                 "match_count": k,
-                "document_id_filter": document_id,
+                "match_document_id": document_id,
             },
         ).execute()
         return result.data
