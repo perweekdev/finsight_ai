@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     google_api_key: str
     groq_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash-exp"
-    embedding_model: str = "models/text-embedding-004"
+    embedding_model: str = "models/gemini-embedding-001"
     chunk_size: int = 512
     chunk_overlap: int = 50
     top_k_chunks: int = 5
